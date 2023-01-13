@@ -38,69 +38,45 @@ struct state_machine : T {
         }, m_current);
     }
 
-    /**
-     * \brief Обработка внешних событий.
-     * \param event - событие.
-     * \return статус выполнения.
-     */
     template<class E>
     event_result process_event(E && event) {
         event_result t_result {event_result::pefuse};
-        // проверяем, что данное событие есть в таблице переходов
-        // или во вложенных типах есть обработка данного события
+
         static_assert(contains<E>(events{}) || contains_in_table<E>(typename transitions::internal_transitions{}), "the event is missing from the transitions table");
 
-        // извлекаем текущее состояние для поиска перехода в котором совпадает начальное состояние и событие
-        // с текущим состоянием и входным событием
         std::visit([&](auto &&t_source) mutable {
-            // поиск номера перехода в таблице переходов
             if (const auto t_transition_index = transitions::get_index(t_source, event); t_transition_index < transitions::count) {
-                // создаём экземпляр перехода обёрнутый в std::variant (пустой тип, но хранит информацию о типах)
                 auto t_transition = transitions::make_transition(t_transition_index);
-                // извлекает экземпляр перехода
                 std::visit([&](auto &&transition) mutable {
-                    // извлекаем типы их перехода
                     using transition_t = std::decay_t<decltype(transition)>;
-                    using guard_t  = typename transition_t::guard_t;        // тип условия
-                    using action_t = typename transition_t::action_t;       // тип действия
-                    using target_t = typename transition_t::target_t;       // тпи следующего состояния
-                    // проверка условия перехода
+                    using guard_t  = typename transition_t::guard_t;
+                    using action_t = typename transition_t::action_t;
+                    using target_t = typename transition_t::target_t;
+
                     if (guard_t guard; guard(static_cast<T const&>(*this), t_source, event)) {
-                        // завершаем текущее состояние
                         t_source.on_exit(static_cast<T&>(*this), std::forward<E>(event));
-                        // создаём экземпляр следующего состояния
                         target_t t_target;
-                        // выполняем действие между состояниями
                         if constexpr (!std::is_same_v<action_t, none>)
                             std::invoke(action_t{}, std::forward<E>(event), static_cast<T&>(*this), t_source, t_target);
-                        // входим в новое состояние
                         t_target.on_enter(static_cast<T&>(*this), std::forward<E>(event));
-                        // запоминаем новое состояние
                         m_current = std::move(t_target);
-                        // выполнен переход
                         t_result = event_result::done;
                     }
                 }, t_transition);
             }
             else {
-                // если у текущего состояния есть таблица действий по событиям
                 using internal_transitions_t = typename std::decay_t<decltype(t_source)>::internal_transitions;
                 if constexpr (!std::is_same_v<internal_transitions_t, void>) {
-                    // если входящее событие есть в таблице действий
                     if (const auto t_transition_index = internal_transitions_t::get_index(event); t_transition_index < internal_transitions_t::count) {
-                        // создаём экземпляр перехода
                         auto t_transition = internal_transitions_t::make_transition(t_transition_index);
-                        // извлекает экземпляр перехода
                         std::visit([&](auto &&transition) mutable {
                             using transition_t = std::decay_t<decltype(transition)>;
-                            using action_t = typename transition_t::action_t;       // тип действия
-                            using guard_t  = typename transition_t::guard_t;        // тип условия
-                            // выполняем действие, если разрешено условием
+                            using action_t = typename transition_t::action_t;
+                            using guard_t  = typename transition_t::guard_t;
                             if constexpr (!std::is_same_v<action_t, none>) {
                                 if (guard_t t_guard; t_guard(static_cast<T const&>(*this), t_source, event))
                                     std::invoke(action_t{}, std::forward<E>(event), static_cast<T&>(*this));
                             }
-                            // действие выполнено
                             t_result = event_result::done;
                         }, t_transition);
                     }
@@ -109,6 +85,19 @@ struct state_machine : T {
         }, m_current);
 
         return t_result;
+    }
+
+    template <IsState State>
+    bool is_in_state() const
+    {
+        static_assert(contains<State>(typename transitions::states_pack{}), "the state is missing from the transitions table");
+
+        bool t_same {false};
+        std::visit([&](auto &&t_source) {
+            t_same = std::is_same_v<State, std::decay_t<decltype(t_source)>>;
+        }, m_current);
+
+        return t_same;
     }
 
 private:

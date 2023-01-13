@@ -8,35 +8,22 @@
 
 namespace ecpp::fsm {
 
-// базовый тип перехода
 struct transition_table_base {};
 
-// базовый тип перехода
+
 template<IsTransition ...T>
 struct transition_table : transition_table_base
 {
-    // TODO проверка на наличие дубликатов пар текущего состояния и события
     static_assert(no_dublicates<T...>::value, "transition table contains duplicates");
 
-    // количество переходов
     static constexpr std::size_t count = sizeof...(T);
 
-    // определяем список переходов
     using transition_pack = type_pack<T...>;
-
-    // определяем список событий используемых в таблице
     using events_pack = type_pack<typename T::event_t...>;
-
-    // список уникальных состояний
     using states_pack = unique_type_pack<typename T::source_t..., typename T::target_t...>;
-
-    // определяем список внутренних таблиц выполнения действий по событиям
     using internal_transitions = non_void_type_pack<typename T::source_tr_t..., typename T::target_tr_t...>;
-
-    // определяем список событий используемых в таблице
     using states_variant = unique_variant<typename T::source_t..., typename T::target_t...>;
 
-    // создаёт экземпляр нужного типа по индексу и кладёт его в std::variant
     static inline constexpr std::variant<T...> make_transition(std::size_t index) {
         return make_impl(std::index_sequence_for<T...>(), index);
     }
@@ -46,12 +33,9 @@ struct transition_table : transition_table_base
         using event_t = std::decay_t<decltype(e)>;
         constexpr bool bs[] = {(std::is_same_v<state_t, typename T::source_t> && std::is_same_v<event_t, typename T::event_t>)...};
         for (std::size_t index {0}; index < sizeof...(T); ++index) {
-            if (bs[index]) {
-                // нужный переход найден
+            if (bs[index])
                 return index;
-            }
         }
-        // нужного перехода нет
         return sizeof...(T);
     }
 
@@ -59,12 +43,9 @@ struct transition_table : transition_table_base
         using event_t = std::decay_t<decltype(e)>;
         constexpr bool bs[] = {(std::is_same_v<event_t, typename T::event_t>)...};
         for (std::size_t index {0}; index < sizeof...(T); ++index) {
-            if (bs[index]) {
-                // нужный переход найден
+            if (bs[index])
                 return index;
-            }
         }
-        // нужного перехода нет
         return sizeof...(T);
     }
 
