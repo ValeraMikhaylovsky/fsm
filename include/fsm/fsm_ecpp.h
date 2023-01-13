@@ -90,7 +90,7 @@ struct state_machine : T {
     template <IsState State>
     bool is_in_state() const noexcept {
         static_assert(contains<State>(typename transitions::states_pack{}), "the state is missing from the transitions table");
-        return m_current.index() == find<State>(typename transitions::states_pack{});
+        return std::holds_alternative<State>(m_current);
     }
 
 private:
