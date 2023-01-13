@@ -72,36 +72,3 @@ using non_void_type_pack = typename non_void<type_pack<>, Ts...>::type;
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
