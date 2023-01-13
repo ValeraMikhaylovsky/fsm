@@ -21,16 +21,6 @@ constexpr bool contains(type_pack<Ts...>) noexcept {
 }
 
 template <class T, class... Ts>
-constexpr std::size_t find(type_pack<Ts...> tp) noexcept {
-    bool bs[] = {std::is_same<T, Ts>::value...};
-    for (std::size_t index = 0; index < sizeof...(Ts); ++index) {
-        if (bs[index])
-            return index;
-    }
-    return sizeof...(Ts);
-}
-
-template <class T, class... Ts>
 struct count_of {
     static constexpr std::size_t value = (static_cast<std::size_t>(std::is_same<T, Ts>::value) + ...);
 };
