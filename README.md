@@ -1,29 +1,29 @@
-# Автомат Конечных Состояний
+# Finite State Machine
 
 `ecpp::fsm` это библиотека автомата конечных состояний на C++20 спроектированная для работы в однопоточной среде.
 
-## Мотивация
+## Inspiration and Motivation
 
-Библиотека `ecpp::fsm` является сильно упрощённой версией библитеки [`::afsm`](https://github.com/zmij/afsm) 
-и реализована таким образом, что бы максимально близко повторять синтаксис `::afsm`.
-Библиотеку `ecpp::fsm` собирает любой компилятор поддерживающий С++20, в то время как `::afsm` не собирается компиляторами
-Microsoft Visual Studio и MinGW.
+The `ecpp::fsm` library was inspired by [`::afsm`](https://github.com/zmij/afsm ) library
+and implemented in such a way that it would repeat the syntax of `::afsm` as closely as possible.
+The `cpp::fsm` library is compiled by any compiler that supports C++20, while `::afsm` is not compiled by compilers
+Microsoft Visual Studio and MinGW.
 
-## Возможности
+## Features
 
-* Табличное представление
-  * Переходы задаются в таблице
-  * Можно указывать действия при переходе между состояниями
-  * Можно указывать условия перехода в следующее состояние
-  * Поддержка предикатов условия перехода `not`, `or` и `and` и их комбинирование
-  * Табличное представление внутренней таблицы действий по событиям внутри состояния
-* Проверка типов на этапе компиляции
-* Относительно быстрая компиляция
-* Отсутствие внешних зависимостей
+* Statechart features
+  * Transition actions
+  * Internal transitions
+  * Transition guards (conditions)
+* Compile-time checks
+* Header only
+* Relatively fast compile time
+* No external dependencies
 
-## Краткий обзор
+## Synopsis
 
-Представление UML-диаграммы тривиального конечного автомата и исходного кода, с которым он сопоставлен.
+Here is a UML diagram of a trivial state machine and source code that it is mapped to.
+
 ![minimal](doc/simple_fsm.png)
 
 ```c++
