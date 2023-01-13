@@ -11,18 +11,23 @@ template <class... Ts>
 struct type_pack {};
 
 template <class T>
-constexpr bool contains(type_pack<>) {
+constexpr bool contains(type_pack<>) noexcept {
     return false;
 }
 
 template <class T, class... Ts>
-constexpr bool contains(type_pack<Ts...>) {
+constexpr bool contains(type_pack<Ts...>) noexcept {
     return (... || std::is_same<T, Ts>::value);
 }
 
-template <class... Ts, class... Us>
-constexpr type_pack<Ts..., Us...> merge(type_pack<Ts...>, type_pack<Us...>) {
-    return {};
+template <class T, class... Ts>
+constexpr std::size_t find(type_pack<Ts...> tp) noexcept {
+    bool bs[] = {std::is_same<T, Ts>::value...};
+    for (std::size_t index = 0; index < sizeof...(Ts); ++index) {
+        if (bs[index])
+            return index;
+    }
+    return sizeof...(Ts);
 }
 
 template <class T, class... Ts>

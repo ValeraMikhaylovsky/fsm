@@ -88,16 +88,9 @@ struct state_machine : T {
     }
 
     template <IsState State>
-    bool is_in_state() const
-    {
+    bool is_in_state() const noexcept {
         static_assert(contains<State>(typename transitions::states_pack{}), "the state is missing from the transitions table");
-
-        bool t_same {false};
-        std::visit([&](auto &&t_source) {
-            t_same = std::is_same_v<State, std::decay_t<decltype(t_source)>>;
-        }, m_current);
-
-        return t_same;
+        return m_current.index() == find<State>(typename transitions::states_pack{});
     }
 
 private:
