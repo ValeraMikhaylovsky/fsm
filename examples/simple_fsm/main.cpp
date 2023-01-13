@@ -3,7 +3,6 @@
 
 using namespace ecpp::fsm;
 
-
 // Events
 struct start {};
 struct stop {};

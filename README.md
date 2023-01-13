@@ -27,7 +27,11 @@ Microsoft Visual Studio и MinGW.
 ![minimal](doc/simple_fsm.png)
 
 ```c++
+#include <cassert>
 #include <fsm/fsm_ecpp.h>
+
+using namespace ecpp::fsm;
+
 // Events
 struct start {};
 struct stop {};
@@ -56,8 +60,11 @@ using minimal = ecpp::fsm::state_machine<minimal_def>;
 void use()
 {
     minimal fsm;
-    fsm.process_event(start{});
-    fsm.process_event(stop{});
+    assert(fsm.is_in_state<minimal_def::initial>());
+    assert(fsm.process_event(start{}) == event_result::done);
+    assert(fsm.is_in_state<minimal_def::running>());
+    assert(fsm.process_event(stop{})  == event_result::done);
+    assert(fsm.is_in_state<minimal_def::terminated>());
 }
 ```
 
