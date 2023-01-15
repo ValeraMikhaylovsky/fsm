@@ -28,13 +28,13 @@ struct state_machine : T {
 
     constexpr state_machine() {
         std::visit([&](auto &&var) {
-            var.on_enter(static_cast<T&>(*this), nullptr);
+            var.on_enter(static_cast<state_machine<T>&>(*this), nullptr);
         }, m_current);
     }
 
     constexpr ~state_machine() {
         std::visit([&](auto &&var) {
-            var.on_exit(static_cast<T&>(*this), nullptr);
+            var.on_exit(static_cast<state_machine<T>&>(*this), nullptr);
         }, m_current);
     }
 
@@ -53,12 +53,12 @@ struct state_machine : T {
                     using action_t = typename transition_t::action_t;
                     using target_t = typename transition_t::target_t;
 
-                    if (guard_t guard; guard(static_cast<T const&>(*this), t_source, event)) {
-                        t_source.on_exit(static_cast<T&>(*this), std::forward<E>(event));
+                    if (guard_t guard; guard(static_cast<state_machine<T> const&>(*this), t_source, event)) {
+                        t_source.on_exit(static_cast<state_machine<T>&>(*this), std::forward<E>(event));
                         target_t t_target;
                         if constexpr (!std::is_same_v<action_t, none>)
-                            std::invoke(action_t{}, std::forward<E>(event), static_cast<T&>(*this), t_source, t_target);
-                        t_target.on_enter(static_cast<T&>(*this), std::forward<E>(event));
+                            std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this), t_source, t_target);
+                        t_target.on_enter(static_cast<state_machine<T>&>(*this), std::forward<E>(event));
                         m_current = std::move(t_target);
                         t_result = event_result::done;
                     }
@@ -74,8 +74,8 @@ struct state_machine : T {
                             using action_t = typename transition_t::action_t;
                             using guard_t  = typename transition_t::guard_t;
                             if constexpr (!std::is_same_v<action_t, none>) {
-                                if (guard_t t_guard; t_guard(static_cast<T const&>(*this), t_source, event))
-                                    std::invoke(action_t{}, std::forward<E>(event), static_cast<T&>(*this));
+                                if (guard_t t_guard; t_guard(static_cast<state_machine<T> const&>(*this), t_source, event))
+                                    std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this));
                             }
                             t_result = event_result::done;
                         }, t_transition);
@@ -96,5 +96,17 @@ struct state_machine : T {
 private:
     typename transitions::states_variant m_current {initial_state{}};
 };
+
+template<class T>
+T& root_machine(state_machine<T>& fsm)
+{
+    return fsm;
+}
+
+template<class T>
+T const& root_machine(state_machine<T> const& fsm)
+{
+    return fsm;
+}
 
 }

@@ -15,9 +15,10 @@ struct turnstile_def {
     struct locked   : state<locked> {
 
         struct beep : action<beep> {
-            void operator()(auto &&, auto &&) const {}
+            void operator()(auto &&/*event*/, auto &/*fsm*/) const {}
 
-            void operator()(push &&, turnstile_def&) const {
+            // partial specialization by event
+            void operator()(push &&, auto &/*fsm*/) const {
                 std::cout << "beep!" << std::endl;
             }
         };
