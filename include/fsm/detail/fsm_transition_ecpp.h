@@ -7,13 +7,18 @@ namespace ecpp::fsm {
 
 struct transition_base {};
 
-template <IsState Source,
+template <class Source,
           class Event,
-          IsState Target,
-          IsAction Action = none,
-          IsGuard Guard = none>
+          class Target,
+          class Action = none,
+          class Guard = none>
 struct tr : transition_base
 {
+    static_assert(std::is_base_of_v<base_state, Source>, "source state is not a state type!");
+    static_assert(std::is_base_of_v<base_state, Target>, "target state is not a state type!");
+    static_assert(std::is_base_of_v<base_action, Action>, "action is not a action type!");
+    static_assert(std::is_base_of_v<base_guard, Guard>, "guard is not a guard type!");
+
     using source_t = Source;
     using event_t  = Event;
     using target_t = Target;
@@ -25,8 +30,11 @@ struct tr : transition_base
     static_assert(!std::is_same_v<Source, Target>, "source state and target state is same!");
 };
 
-template <class Event, IsAction Action, IsGuard Guard = none>
+template <class Event, class Action, class Guard = none>
 struct in : transition_base {
+    static_assert(std::is_base_of_v<base_action, Action>, "action is not a action type!");
+    static_assert(std::is_base_of_v<base_guard, Guard>, "guard is not a guard type!");
+
     using event_t  = Event;
     using action_t = Action;
     using guard_t  = Guard;
@@ -36,25 +44,23 @@ struct in : transition_base {
     using target_tr_t = void;
 };
 
-template<typename T>
-concept IsTransition = std::is_base_of_v<transition_base, T>;
 
-template <IsTransition Ts>
+template <class Ts>
 constexpr bool operator==(Ts, Ts) {
     return true;
 }
 
-template <IsTransition Ts, IsTransition Us>
+template <class Ts, class Us>
 constexpr bool operator==(Ts, Us) {
     return false;
 }
 
-template <IsTransition Ts>
+template <class Ts>
 constexpr bool operator!=(Ts, Ts) {
     return false;
 }
 
-template <IsTransition Ts, IsTransition Us>
+template <class Ts, class Us>
 constexpr bool operator!=(Ts, Us) {
     return true;
 }

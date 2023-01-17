@@ -30,9 +30,14 @@ struct no_dublicates {
     static constexpr bool value = ((count_of<Ts, Ts...>::value == 1) && ...);
 };
 
+template< class T >
+struct type_identity {
+    using type = T;
+};
+
 // формирование типа без дубликатов
 template <typename T, typename... Ts>
-struct unique : std::type_identity<T> {};
+struct unique : type_identity<T> {};
 
 template <typename... Ts, typename U, typename... Us>
 struct unique<std::variant<Ts...>, U, Us...>
@@ -44,7 +49,7 @@ template <typename... Ts>
 using unique_variant = typename unique<std::variant<>, Ts...>::type;
 
 template <typename T, typename... Ts>
-struct unique_pack : std::type_identity<T> {};
+struct unique_pack : type_identity<T> {};
 
 
 template <typename... Ts, typename U, typename... Us>
@@ -59,7 +64,7 @@ using unique_type_pack = typename unique_pack<type_pack<>, Ts...>::type;
 
 // формирование списка типов без типа void
 template <typename T, typename... Ts>
-struct non_void : std::type_identity<T> {};
+struct non_void : type_identity<T> {};
 
 template <typename... Ts, typename U, typename... Us>
 struct non_void<type_pack<Ts...>, U, Us...>

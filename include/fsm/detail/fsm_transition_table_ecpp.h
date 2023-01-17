@@ -11,9 +11,10 @@ namespace ecpp::fsm {
 struct transition_table_base {};
 
 
-template<IsTransition ...T>
+template<class ...T>
 struct transition_table : transition_table_base
 {
+    static_assert((... || std::is_base_of_v<transition_base, T>), "template type must be a transition type");
     static_assert(no_dublicates<T...>::value, "transition table contains duplicates");
 
     static constexpr std::size_t count = sizeof...(T);
@@ -28,7 +29,10 @@ struct transition_table : transition_table_base
         return make_impl(std::index_sequence_for<T...>(), index);
     }
 
-    static inline constexpr std::size_t get_index(const auto &s, const auto &e) {
+    template<class State, class Event>
+    static inline constexpr std::size_t get_index(const State &s, const Event &e) {
+        static_assert(std::is_base_of_v<base_state, State>, "template type must be a state type");
+
         using state_t = std::decay_t<decltype(s)>;
         using event_t = std::decay_t<decltype(e)>;
         constexpr bool bs[] = {(std::is_same_v<state_t, typename T::source_t> && std::is_same_v<event_t, typename T::event_t>)...};
@@ -39,7 +43,8 @@ struct transition_table : transition_table_base
         return sizeof...(T);
     }
 
-    static inline constexpr std::size_t get_index(const auto &e) {
+    template<class Event>
+    static inline constexpr std::size_t get_index(const Event &e) {
         using event_t = std::decay_t<decltype(e)>;
         constexpr bool bs[] = {(std::is_same_v<event_t, typename T::event_t>)...};
         for (std::size_t index {0}; index < sizeof...(T); ++index) {

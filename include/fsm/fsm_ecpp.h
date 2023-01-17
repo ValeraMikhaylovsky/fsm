@@ -32,7 +32,7 @@ struct state_machine : T {
         }, m_current);
     }
 
-    constexpr ~state_machine() {
+    ~state_machine() {
         std::visit([&](auto &&var) {
             var.on_exit(static_cast<state_machine<T>&>(*this), nullptr);
         }, m_current);
@@ -87,7 +87,7 @@ struct state_machine : T {
         return t_result;
     }
 
-    template <IsState State>
+    template <class State>
     constexpr bool is_in_state() const noexcept {
         static_assert(contains<State>(typename transitions::states_pack{}), "the state is missing from the transitions table");
         return std::holds_alternative<State>(m_current);

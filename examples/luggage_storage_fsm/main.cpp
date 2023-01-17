@@ -15,7 +15,8 @@ struct luggage_storage_def {
     /** @name States */
     struct locked : state<locked> {
         struct print_status : action<print_status> {
-            void operator()(auto &&, auto &&) const {
+            template <class Event, class FSM>
+            void operator()(Event &&/*event*/, FSM &/*fsm*/) const {
                 std::cout << "status: locked" << std::endl;
             }
         };
@@ -28,7 +29,8 @@ struct luggage_storage_def {
 
     struct unlocked : state<unlocked> {
         struct print_status : action<print_status> {
-            void operator()(auto &&, auto &&) const {
+            template <class Event, class FSM>
+            void operator()(Event &&/*event*/, FSM &/*fsm*/) const {
                 std::cout << "status: unlocked" << std::endl;
             }
         };

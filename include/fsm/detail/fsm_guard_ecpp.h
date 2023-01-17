@@ -1,6 +1,5 @@
 #pragma once
 
-#include <concepts>
 #include <type_traits>
 
 namespace ecpp::fsm {
@@ -17,8 +16,5 @@ struct guard : base_guard {
         return true;
     }
 };
-
-template<typename T>
-concept IsGuard = std::is_base_of_v<base_guard, T>;
 
 }
