@@ -1,6 +1,6 @@
 # Finite State Machine
 
-`ecpp::fsm` is a finite state machine C++20 library designed for usage in single threaded environment.
+`ecpp::fsm` is a finite state machine C++20 (C++17 in C++17 branch) library designed for usage in single threaded environment.
 
 ## Inspiration and Motivation
 
