@@ -13,7 +13,7 @@
 namespace ecpp::fsm {
 
 enum class event_result {
-    pefuse,
+    refuse,
     done
 };
 
@@ -40,7 +40,7 @@ struct state_machine : T {
 
     template<class E>
     event_result process_event(E && event) {
-        event_result t_result {event_result::pefuse};
+        event_result t_result {event_result::refuse};
 
         static_assert(contains<E>(events{}) || contains_in_table<E>(typename transitions::internal_transitions{}), "the event is missing from the transitions table");
 

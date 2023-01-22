@@ -4,7 +4,7 @@
 
 ## Inspiration and Motivation
 
-The `ecpp::fsm` library was inspired by [`::afsm`](https://github.com/zmij/afsm ) library
+The `ecpp::fsm` library was inspired by [`::afsm`](https://github.com/zmij/afsm) library
 and implemented in such a way that it would repeat the syntax of `::afsm` as closely as possible.
 The `cpp::fsm` library is compiled by any compiler that supports C++20, while `::afsm` is not compiled by compilers
 Microsoft Visual Studio and MinGW.
