@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     assert(fsm.process_event(lock{0x3254}) == event_result::done);      // correct pincode - switch to lock
     assert(fsm.is_in_state<luggage_storage_def::locked>());
     assert(fsm.process_event(status{}) == event_result::done);          // print: "status: locked"
-    assert(fsm.process_event(unlock{0x7258}) == event_result::pefuse);  // incorrect pincode - ignore
+    assert(fsm.process_event(unlock{0x7258}) == event_result::refuse);  // incorrect pincode - ignore
     assert(fsm.is_in_state<luggage_storage_def::locked>());
     assert(fsm.process_event(unlock{0x3254}) == event_result::done);    // correct pincode - switch to unlock
     assert(fsm.is_in_state<luggage_storage_def::unlocked>());
