@@ -26,7 +26,14 @@ struct state_machine : T {
     static_assert(!std::is_same_v<initial_state, void>, "the initial state is not defined");
     static_assert(!std::is_same_v<transitions, void>, "the transition table is not defined");
 
-    constexpr state_machine() {
+    constexpr state_machine() : T{} {
+        std::visit([&](auto &&var) {
+            var.on_enter(static_cast<state_machine<T>&>(*this), nullptr);
+        }, m_current);
+    }
+
+    template <typename... Args>
+    constexpr state_machine(Args&&... args) : T{std::forward<Args>(args)...} {
         std::visit([&](auto &&var) {
             var.on_enter(static_cast<state_machine<T>&>(*this), nullptr);
         }, m_current);
