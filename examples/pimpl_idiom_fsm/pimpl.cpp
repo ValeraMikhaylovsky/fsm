@@ -49,9 +49,11 @@ private:
 };
 
 // State machine object
-struct pimpl::impl : ecpp::fsm::state_machine<minimal_def>
+using fsm_t = ecpp::fsm::state_machine<minimal_def>;
+
+struct pimpl::impl final : fsm_t
 {
-    impl(pimpl &context) : ecpp::fsm::state_machine<minimal_def>{context} {
+    impl(pimpl &context) : fsm_t{context} {
 
     }
 };
