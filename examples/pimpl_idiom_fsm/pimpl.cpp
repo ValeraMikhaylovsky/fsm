@@ -65,10 +65,7 @@ pimpl::pimpl() : pImpl{std::make_unique<impl>(*this)}
 
 }
 
-pimpl::~pimpl()
-{
-
-}
+pimpl::~pimpl() = default;
 
 void pimpl::start()
 {
