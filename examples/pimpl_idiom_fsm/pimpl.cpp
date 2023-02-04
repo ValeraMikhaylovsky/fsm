@@ -57,7 +57,7 @@ struct pimpl::impl : ecpp::fsm::state_machine<minimal_def>
 };
 
 
-
+// Pimpl implementation
 pimpl::pimpl() : pImpl{std::make_unique<impl>(*this)}
 {
 
