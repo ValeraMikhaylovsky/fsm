@@ -17,6 +17,8 @@ struct transition_table : transition_table_base
 {
     static_assert(no_dublicates<T...>::value, "transition table contains duplicates");
 
+    struct empty_state : state<empty_state> {};
+
     static constexpr std::size_t count = sizeof...(T);
     using transition_pack = type_pack<T...>;
     using events_pack = type_pack<typename T::event_t...>;

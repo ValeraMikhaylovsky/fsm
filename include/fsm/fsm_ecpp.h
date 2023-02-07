@@ -61,7 +61,7 @@ struct state_machine : T {
 
                     if (guard_t guard; guard(static_cast<state_machine<T> const&>(*this), t_source, event)) {
                         t_source.on_exit(static_cast<state_machine<T>&>(*this), std::forward<E>(event));
-                        m_current = empty_state{};
+                        m_current = typename transitions_pack_t::empty_state{};
                         target_t t_target;
                         if constexpr (!std::is_same_v<action_t, none>)
                             std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this), t_source, t_target);
