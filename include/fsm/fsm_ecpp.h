@@ -19,15 +19,6 @@ enum class event_result {
 
 template<class T>
 struct state_machine : T {
-private:
-    struct locker {
-        locker(bool &flag) noexcept : m_flag{flag}{ m_flag = true; }
-        ~locker() { m_flag = false; }
-    private:
-        bool &m_flag;
-    };
-
-public:
     using transitions_pack_t = typename T::transitions;
     using events_pack_t = typename transitions_pack_t::events_pack;
     using initial_state_t = typename T::initial_state;
@@ -59,9 +50,6 @@ public:
         event_result t_result {event_result::refuse};
         static_assert(contains<E>(events_pack_t{}) || contains_in_table<E>(typename transitions_pack_t::internal_transitions{}), "the event is missing from the transitions table");
 
-        if (m_busy)
-            return t_result;
-
         std::visit([&](auto &&t_source) mutable {
             if (const auto t_transition_index = transitions_pack_t::get_index(t_source, event); t_transition_index < transitions_pack_t::count) {
                 auto t_transition = transitions_pack_t::make_transition(t_transition_index);
@@ -72,8 +60,8 @@ public:
                     using target_t = typename transition_t::target_t;
 
                     if (guard_t guard; guard(static_cast<state_machine<T> const&>(*this), t_source, event)) {
-                        locker lock{m_busy}; // lock other transition from action
                         t_source.on_exit(static_cast<state_machine<T>&>(*this), std::forward<E>(event));
+                        m_current = empty_state{};
                         target_t t_target;
                         if constexpr (!std::is_same_v<action_t, none>)
                             std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this), t_source, t_target);
@@ -114,7 +102,6 @@ public:
 
 private:
     typename transitions_pack_t::states_variant m_current {initial_state_t{}};
-    bool m_busy {false};
 };
 
 template<class T>

@@ -18,6 +18,8 @@ struct state : base_state {
     void on_exit([[maybe_unused]] auto &&fsm, [[maybe_unused]] auto &&event){}
 };
 
+struct empty_state : state<empty_state> {};
+
 template<typename T>
 concept IsState = std::is_base_of_v<base_state, T>;
 

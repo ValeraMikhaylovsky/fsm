@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <variant>
 
+#include "fsm_state_ecpp.h"
 #include "fsm_transition_ecpp.h"
 #include "fsm_meta_lib_ecpp.h"
 
@@ -17,12 +18,11 @@ struct transition_table : transition_table_base
     static_assert(no_dublicates<T...>::value, "transition table contains duplicates");
 
     static constexpr std::size_t count = sizeof...(T);
-
     using transition_pack = type_pack<T...>;
     using events_pack = type_pack<typename T::event_t...>;
     using states_pack = unique_type_pack<typename T::source_t..., typename T::target_t...>;
     using internal_transitions = non_void_type_pack<typename T::source_tr_t..., typename T::target_tr_t...>;
-    using states_variant = unique_variant<typename T::source_t..., typename T::target_t...>;
+    using states_variant = unique_variant<typename T::source_t..., typename T::target_t..., empty_state>;
 
     static inline constexpr std::variant<T...> make_transition(std::size_t index) {
         return make_impl(std::index_sequence_for<T...>(), index);
