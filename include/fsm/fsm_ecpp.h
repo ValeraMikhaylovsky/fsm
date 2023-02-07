@@ -111,7 +111,19 @@ T& root_machine(state_machine<T>& fsm)
 }
 
 template<class T>
-T const& root_machine(state_machine<T> const& fsm)
+T const& root_machine(state_machine<T> const &fsm)
+{
+    return fsm;
+}
+
+template<class T>
+T const& root_machine(T const &fsm)
+{
+    return fsm;
+}
+
+template<class T>
+T& root_machine(T& fsm)
 {
     return fsm;
 }
