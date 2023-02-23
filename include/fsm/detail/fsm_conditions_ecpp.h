@@ -5,15 +5,7 @@
 namespace ecpp::fsm {
 
 struct none : base_action, base_guard {
-    template <class... Args>
-    void operator()(Args&&...) const {
 
-    }
-
-    template <class FSM, IsState State, class Event>
-    bool operator()(FSM &, State &, Event &&) const {
-        return true;
-    }
 };
 
 template  <IsGuard Predicate>

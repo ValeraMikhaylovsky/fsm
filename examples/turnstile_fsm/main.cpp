@@ -15,8 +15,6 @@ struct turnstile_def {
     struct locked   : state<locked> {
 
         struct beep : action<beep> {
-            void operator()(auto &&/*event*/, auto &/*fsm*/) const {}
-
             // partial specialization by event
             void operator()(push &&, auto &/*fsm*/) const {
                 std::cout << "beep!" << std::endl;
@@ -35,8 +33,7 @@ struct turnstile_def {
     //@}
 
     struct on_blink : action<on_blink> {
-        template <class FSM, class Event, class SourceState, class TargetState>
-        void operator()(Event &&, FSM&, const SourceState &, const TargetState &) const {
+        void operator()(coin &&, auto&) const {
             std::cout << "blink, blink, blink!" << std::endl;
         }
     };

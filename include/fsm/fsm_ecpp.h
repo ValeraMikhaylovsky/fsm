@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <functional>
 #include <type_traits>
 
@@ -12,10 +13,47 @@
 
 namespace ecpp::fsm {
 
+template <typename... Args>
+void print_types(Args... args) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+}
+
 enum class event_result {
     refuse,
     done
 };
+
+namespace impl {
+    template <IsGuard Guard>
+    struct GuardHelper {
+        bool operator()(auto &&event, auto const &fsm, auto const &src, auto const &dst) const {
+            using event_t  = std::decay_t<decltype(event)>;
+            using fsm_t    = std::decay_t<decltype(fsm)>;
+            using source_t = std::decay_t<decltype(src)>;
+            using target_t = std::decay_t<decltype(dst)>;
+
+            if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t, source_t, target_t>)
+                return std::invoke(Guard{}, event, fsm, src, dst);
+            else if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t, source_t>)
+                return std::invoke(Guard{}, event, fsm, src);
+            else if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t>)
+                return std::invoke(Guard{}, event, fsm);
+            return true;
+        }
+
+        bool operator()(auto &&event, auto const &fsm, auto const &src) const {
+            using event_t  = std::decay_t<decltype(event)>;
+            using fsm_t    = std::decay_t<decltype(fsm)>;
+            using source_t = std::decay_t<decltype(src)>;
+
+            if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t, source_t>)
+                return std::invoke(Guard{}, event, fsm, src);
+            else if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t>)
+                return std::invoke(Guard{}, event, fsm);
+            return true;
+        }
+    };
+}
 
 template<class T>
 struct state_machine : T {
@@ -57,13 +95,18 @@ struct state_machine : T {
                     using transition_t = std::decay_t<decltype(transition)>;
                     using guard_t  = typename transition_t::guard_t;
                     using action_t = typename transition_t::action_t;
+                    using source_t = typename std::decay_t<decltype(t_source)>;
                     using target_t = typename transition_t::target_t;
-                    if (guard_t guard; guard(static_cast<state_machine<T> const&>(*this), t_source, event)) {
+                    target_t t_target;
+                    if (impl::GuardHelper<guard_t> t_guard; t_guard(event, static_cast<state_machine<T> const&>(*this), static_cast<source_t const &>(t_source), static_cast<target_t const &>(t_target))) {
                         t_source.on_exit(static_cast<state_machine<T>&>(*this), std::forward<E>(event));
                         m_current  = typename transitions_pack_t::empty_state{};
-                        target_t t_target;
-                        if constexpr (!std::is_same_v<action_t, none>)
+                        if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&, source_t, target_t>)
                             std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this), t_source, t_target);
+                        else if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&, source_t>)
+                            std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this), t_source);
+                        else if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&>)
+                            std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this));
                         t_target.on_enter(static_cast<state_machine<T>&>(*this), std::forward<E>(event));
                         m_current = std::move(t_target);
                         t_result = event_result::done;
@@ -79,9 +122,12 @@ struct state_machine : T {
                             using transition_t = std::decay_t<decltype(transition)>;
                             using action_t = typename transition_t::action_t;
                             using guard_t  = typename transition_t::guard_t;
-                            if constexpr (!std::is_same_v<action_t, none>) {
-                                if (guard_t t_guard; t_guard(static_cast<state_machine<T> const&>(*this), t_source, event))
-                                    std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this));
+                            using source_t = typename std::decay_t<decltype(t_source)>;
+                            if (impl::GuardHelper<guard_t> t_guard; t_guard(event, static_cast<state_machine<T> const&>(*this), static_cast<source_t const &>(t_source))) {
+                                if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&, source_t>)
+                                    std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T> &>(*this), static_cast<source_t&>(t_source));
+                                else if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&>)
+                                    std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T> &>(*this));
                             }
                             t_result = event_result::done;
                         }, t_transition);
@@ -102,29 +148,5 @@ struct state_machine : T {
 private:
     typename transitions_pack_t::states_variant m_current {initial_state_t{}};
 };
-
-template<class T>
-T& root_machine(state_machine<T>& fsm)
-{
-    return fsm;
-}
-
-template<class T>
-T const& root_machine(state_machine<T> const &fsm)
-{
-    return fsm;
-}
-
-template<class T>
-T const& root_machine(T const &fsm)
-{
-    return fsm;
-}
-
-template<class T>
-T& root_machine(T& fsm)
-{
-    return fsm;
-}
 
 }

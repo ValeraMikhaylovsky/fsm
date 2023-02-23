@@ -15,20 +15,26 @@ struct luggage_storage_def {
     /** @name States */
     struct locked : state<locked> {
         struct print_status : action<print_status> {
-            void operator()(auto &&, auto &&) const {
+            void operator()(status &&, auto &) const {
                 std::cout << "status: locked" << std::endl;
             }
         };
 
+        struct is_print : guard<print_status> {
+            bool operator()(const status &event, const auto &fsm) const {
+               return true;
+            }
+        };
+
         using internal_transitions = transition_table<
-            /*  Event     Action  */
-            in< status,   print_status    >
+            /*  Event     Action         Guard    */
+            in< status,   print_status , is_print >
         >;
     };
 
     struct unlocked : state<unlocked> {
         struct print_status : action<print_status> {
-            void operator()(auto &&, auto &&) const {
+            void operator()(status &&, auto &) const {
                 std::cout << "status: unlocked" << std::endl;
             }
         };
@@ -41,40 +47,28 @@ struct luggage_storage_def {
     //@}
 
     struct on_locked : action<on_locked> {
-        template <class FSM, class Event, class SourceState, class TargetState>
-        void operator()(Event &&event, FSM &fsm, const SourceState &, const TargetState &) const {
-            if constexpr (!std::is_same_v<Event, status>) {
-                root_machine(fsm).m_pincode = event.pincode; // save pincode
-                std::cout << "locked!" << std::endl;
-            }
+        void operator()(lock &&event, auto &fsm) const {
+            fsm.m_pincode = event.pincode; // save pincode
+            std::cout << "locked!" << std::endl;
         }
     };
 
     struct on_unlocked : action<on_unlocked> {
-        template <class FSM, class Event, class SourceState, class TargetState>
-        void operator()(Event &&event, FSM &fsm, const SourceState &, const TargetState &) const {
-            root_machine(fsm).m_pincode = 0; // reset pincode
+        void operator()(unlock &&event, auto &fsm) const {
+            fsm.m_pincode = 0; // reset pincode
             std::cout << "unlocked!" << std::endl;
         }
     };
 
     struct is_set_pincode : guard<is_set_pincode> {
-        template < class FSM, class State, class Event >
-        bool operator()(FSM const &, State const&, Event const &event) const {
-            if constexpr (!std::is_same_v<Event, status>)
-                return event.pincode != 0;
-            else
-                return true;
+        bool operator()(const lock &event, const auto &fsm) const {
+            return event.pincode != 0;
         }
     };
 
     struct is_valid_pincode : guard<is_valid_pincode> {
-        template < class FSM, class State, class Event >
-        bool operator()(FSM const &fsm, State const&, Event const &event) const {
-            if constexpr (!std::is_same_v<Event, status>)
-                return event.pincode == root_machine(fsm).m_pincode; // check input pincode
-            else
-                return true;
+        bool operator()(const unlock &event, const auto & fsm) const {
+            return event.pincode == fsm.m_pincode; // check input pincode
         }
     };
 
