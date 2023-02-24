@@ -52,7 +52,7 @@ struct luggage_storage_def {
     struct on_locked : action<on_locked> {
         template <class FSM>
         void operator()(lock &&event, FSM &fsm) const {
-            root_machine(fsm).m_pincode = event.pincode; // save pincode
+            fsm.m_pincode = event.pincode; // save pincode
             std::cout << "locked!" << std::endl;
         }
     };
@@ -60,7 +60,7 @@ struct luggage_storage_def {
     struct on_unlocked : action<on_unlocked> {
         template <class FSM>
         void operator()(unlock &&event, FSM &fsm) const {
-            root_machine(fsm).m_pincode = 0; // reset pincode
+            fsm.m_pincode = 0; // reset pincode
             std::cout << "unlocked!" << std::endl;
         }
     };
@@ -75,7 +75,7 @@ struct luggage_storage_def {
     struct is_valid_pincode : guard<is_valid_pincode> {
         template < class FSM>
         bool operator()(const unlock &event, const FSM &fsm) const {
-            return event.pincode == root_machine(fsm).m_pincode; // check input pincode
+            return event.pincode == fsm.m_pincode; // check input pincode
         }
     };
 

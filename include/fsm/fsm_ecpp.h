@@ -150,16 +150,4 @@ private:
     typename transitions_pack_t::states_variant m_current {initial_state_t{}};
 };
 
-template<class T>
-T& root_machine(state_machine<T>& fsm)
-{
-    return fsm;
-}
-
-template<class T>
-T const& root_machine(state_machine<T> const& fsm)
-{
-    return fsm;
-}
-
 }
