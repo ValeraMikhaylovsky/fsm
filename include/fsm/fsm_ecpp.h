@@ -23,38 +23,6 @@ enum class event_result {
     done
 };
 
-namespace impl {
-    template <IsGuard Guard>
-    struct GuardHelper {
-        bool operator()(auto &&event, auto const &fsm, auto const &src, auto const &dst) const {
-            using event_t  = std::decay_t<decltype(event)>;
-            using fsm_t    = std::decay_t<decltype(fsm)>;
-            using source_t = std::decay_t<decltype(src)>;
-            using target_t = std::decay_t<decltype(dst)>;
-
-            if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t, source_t, target_t>)
-                return std::invoke(Guard{}, event, fsm, src, dst);
-            else if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t, source_t>)
-                return std::invoke(Guard{}, event, fsm, src);
-            else if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t>)
-                return std::invoke(Guard{}, event, fsm);
-            return true;
-        }
-
-        bool operator()(auto &&event, auto const &fsm, auto const &src) const {
-            using event_t  = std::decay_t<decltype(event)>;
-            using fsm_t    = std::decay_t<decltype(fsm)>;
-            using source_t = std::decay_t<decltype(src)>;
-
-            if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t, source_t>)
-                return std::invoke(Guard{}, event, fsm, src);
-            else if constexpr (std::is_invocable_r_v<bool, Guard, event_t, fsm_t>)
-                return std::invoke(Guard{}, event, fsm);
-            return true;
-        }
-    };
-}
-
 template<class T>
 struct state_machine : T {
     using transitions_pack_t = typename T::transitions;

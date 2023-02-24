@@ -28,7 +28,7 @@ struct luggage_storage_def {
 
         using internal_transitions = transition_table<
             /*  Event     Action         Guard    */
-            in< status,   print_status , is_print >
+            in< status,   print_status , is_print  >
         >;
     };
 
