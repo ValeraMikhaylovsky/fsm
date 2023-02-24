@@ -44,7 +44,7 @@ struct luggage_storage_def {
 
         using internal_transitions = transition_table<
             /*  Event     Action  */
-            in< status,   print_status    >
+            in< status,   print_status >
         >;
     };
     //@}
@@ -66,14 +66,14 @@ struct luggage_storage_def {
     };
 
     struct is_set_pincode : guard<is_set_pincode> {
-        template < class FSM>
+        template <class FSM>
         bool operator()(const lock &event, const FSM &) const {
             return event.pincode != 0;
         }
     };
 
     struct is_valid_pincode : guard<is_valid_pincode> {
-        template < class FSM>
+        template <class FSM>
         bool operator()(const unlock &event, const FSM &fsm) const {
             return event.pincode == fsm.m_pincode; // check input pincode
         }
