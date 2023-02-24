@@ -37,7 +37,7 @@ struct minimal_def {
     using initial_state = initial;
     using transitions   = transition_table
     <
-        /*  State       Event            Next        */
+        /*  State       Event            Next          Action       */
         tr< initial,    events::start,   running   ,   on_start  >,
         tr< running,    events::stop,    terminated,   on_stop   >
     >;
