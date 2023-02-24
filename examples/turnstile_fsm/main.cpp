@@ -15,10 +15,6 @@ struct turnstile_def {
     struct locked   : state<locked> {
 
         struct beep : action<beep> {
-            template <class Event, class FSM>
-            void operator()(Event &&/*event*/, FSM &/*fsm*/) const {}
-
-            // partial specialization by event
             template <class FSM>
             void operator()(push &&, FSM &/*fsm*/) const {
                 std::cout << "beep!" << std::endl;
@@ -37,8 +33,8 @@ struct turnstile_def {
     //@}
 
     struct on_blink : action<on_blink> {
-        template <class FSM, class Event, class SourceState, class TargetState>
-        void operator()(Event &&, FSM&, const SourceState &, const TargetState &) const {
+        template <class FSM>
+        void operator()(coin &&, FSM&) const {
             std::cout << "blink, blink, blink!" << std::endl;
         }
     };
@@ -63,7 +59,7 @@ int main(int argc, char *argv[])
     assert(fsm.process_event(push{}) == event_result::done); // beep!
     assert(fsm.process_event(coin{}) == event_result::done); // blink, blink, blink!
     assert(fsm.is_in_state<turnstile_def::unlocked>());
-    assert(fsm.process_event(push{})  == event_result::done);
+    assert(fsm.process_event(push{}) == event_result::done);
     assert(fsm.is_in_state<turnstile_def::locked>());
 
     return 0;

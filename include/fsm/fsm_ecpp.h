@@ -17,6 +17,33 @@ enum class event_result {
     done
 };
 
+namespace impl {
+    template <typename Guard>
+    struct GuardHelper {
+        static_assert(std::is_base_of_v<base_guard, Guard>, "Guard is not a guard type!");
+
+        template <typename E, typename  FSM, typename SOURCE, typename TARGET>
+        bool operator()(E &&event, FSM const &fsm, SOURCE const &src, TARGET const &dst) const {
+            if constexpr (std::is_invocable_r_v<bool, Guard, E, FSM, SOURCE, TARGET>)
+                return std::invoke(Guard{}, event, fsm, src, dst);
+            else if constexpr (std::is_invocable_r_v<bool, Guard, E, FSM, SOURCE>)
+                return std::invoke(Guard{}, event, fsm, src);
+            else if constexpr (std::is_invocable_r_v<bool, Guard, E, FSM>)
+                return std::invoke(Guard{}, event, fsm);
+            return true;
+        }
+
+        template <typename E, typename  FSM, typename SOURCE>
+        bool operator()(E &&event, FSM const &fsm, SOURCE const &src) const {
+            if constexpr (std::is_invocable_r_v<bool, Guard, E, FSM, SOURCE>)
+                return std::invoke(Guard{}, event, fsm, src);
+            else if constexpr (std::is_invocable_r_v<bool, Guard, E, FSM>)
+                return std::invoke(Guard{}, event, fsm);
+            return true;
+        }
+    };
+}
+
 template<class T>
 struct state_machine : T {
 private:
@@ -59,9 +86,6 @@ public:
         event_result t_result {event_result::refuse};
         static_assert(contains<E>(events_pack_t{}) || contains_in_table<E>(typename transitions_pack_t::internal_transitions{}), "the event is missing from the transitions table");
 
-        if (m_busy)
-            return t_result;
-
         std::visit([&](auto &&t_source) mutable {
             if (const auto t_transition_index = transitions_pack_t::get_index(t_source, event); t_transition_index < transitions_pack_t::count) {
                 auto t_transition = transitions_pack_t::make_transition(t_transition_index);
@@ -69,14 +93,19 @@ public:
                     using transition_t = std::decay_t<decltype(transition)>;
                     using guard_t  = typename transition_t::guard_t;
                     using action_t = typename transition_t::action_t;
+                    using source_t = typename std::decay_t<decltype(t_source)>;
                     using target_t = typename transition_t::target_t;
+                    target_t t_target;
 
-                    if (guard_t guard; guard(static_cast<state_machine<T> const&>(*this), t_source, event)) {
-                        locker lock{m_busy}; // lock other transition from action
+                    if (impl::GuardHelper<guard_t> t_guard; t_guard(event, static_cast<state_machine<T> const&>(*this), static_cast<source_t const &>(t_source), static_cast<target_t const &>(t_target))) {
                         t_source.on_exit(static_cast<state_machine<T>&>(*this), std::forward<E>(event));
-                        target_t t_target;
-                        if constexpr (!std::is_same_v<action_t, none>)
+                        m_current = typename transitions_pack_t::empty_state{};
+                        if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&, source_t, target_t>)
                             std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this), t_source, t_target);
+                        else if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&, source_t>)
+                            std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this), t_source);
+                        else if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&>)
+                            std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this));
                         t_target.on_enter(static_cast<state_machine<T>&>(*this), std::forward<E>(event));
                         m_current = std::move(t_target);
                         t_result = event_result::done;
@@ -92,9 +121,14 @@ public:
                             using transition_t = std::decay_t<decltype(transition)>;
                             using action_t = typename transition_t::action_t;
                             using guard_t  = typename transition_t::guard_t;
+                            using source_t = typename std::decay_t<decltype(t_source)>;
                             if constexpr (!std::is_same_v<action_t, none>) {
-                                if (guard_t t_guard; t_guard(static_cast<state_machine<T> const&>(*this), t_source, event))
-                                    std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T>&>(*this));
+                                if (impl::GuardHelper<guard_t> t_guard; t_guard(event, static_cast<state_machine<T> const&>(*this), static_cast<source_t const &>(t_source))) {
+                                    if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&, source_t>)
+                                        std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T> &>(*this), static_cast<source_t&>(t_source));
+                                    else if constexpr (std::is_invocable_v<action_t, E, state_machine<T>&>)
+                                        std::invoke(action_t{}, std::forward<E>(event), static_cast<state_machine<T> &>(*this));
+                                }
                             }
                             t_result = event_result::done;
                         }, t_transition);
@@ -114,7 +148,6 @@ public:
 
 private:
     typename transitions_pack_t::states_variant m_current {initial_state_t{}};
-    bool m_busy {false};
 };
 
 template<class T>
