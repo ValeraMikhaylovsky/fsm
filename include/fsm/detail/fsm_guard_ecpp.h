@@ -6,20 +6,96 @@
 
 namespace ecpp::fsm {
 
-struct base_guard {};
 
-template<class Child>
-struct guard : base_guard {
-    using child_t = Child;
-    using base_t  = base_guard;
+template<class G, class E, class F, class S>
+concept CallGuard = requires(G guard, E event, F fsm, S src) {
+    { guard(event, fsm, src) } -> std::convertible_to<bool>;
+};
 
+template<class G, class E, class F>
+concept CallGuardShort = requires(G guard, E event, F fsm) {
+    { guard(event, fsm) } -> std::convertible_to<bool>;
+};
+
+template  <class G>
+struct call_guard {
+    template<class E, class F, class S> requires CallGuard<G, E, F, S>
+    bool operator()(const E &event, const F &fsm, const S &src) const {
+        return G{}(event, fsm, src);
+    }
+
+    template<class E, class F, class S> requires CallGuardShort<G, E, F>
+    bool operator()(const E &event, const F &fsm, const S &) const {
+        return G{}(event, fsm);
+    }
+
+    template<class E, class F, class S>
+    bool operator()(const E &, const F &, const S &) const {
+        return true;
+    }
+};
+
+
+template  <class G>
+struct not_ {
+    template<class E, class F, class S> requires CallGuard<G, E, F, S>
+    bool operator()(const E &event, const F &fsm, const S &src) const {
+        return !G{}(event, fsm, src);
+    }
+
+    template<class E, class F, class S> requires CallGuardShort<G, E, F>
+    bool operator()(const E &event, const F &fsm, const S &) const {
+        return !G{}(event, fsm);
+    }
+
+    template<class E, class F, class S>
+    bool operator()(const E &, const F &, const S &) const {
+        return false;
+    }
+};
+
+
+template <class... G>
+struct and_ {
+    template<class E, class F, class S> requires ((CallGuard<call_guard<G>, E, F, S>) && ...)
+    bool operator()(const E &event, const F &fsm, const S &src) const {
+        return (call_guard<G>{}(event, fsm, src) && ...);
+    }
+
+    template<class E, class F, class S>
+    bool operator()(const E &, const F &, const S &) const {
+        return true;
+    }
+};
+
+template <>
+struct and_<> {
+    template <class... Args>
+    bool operator()(Args&&...) const {
+        return false;
+    }
+};
+
+
+template <class... G>
+struct or_ {
+    template<class E, class F, class S> requires ((CallGuard<call_guard<G>, E, F, S>) && ...)
+    bool operator()(const E &event, const F &fsm, const S &src) const {
+        return (call_guard<G>{}(event, fsm, src) || ...);
+    }
+
+    template<class E, class F, class S>
+    bool operator()(const E &, const F &, const S &) const {
+        return true;
+    }
+};
+
+template <>
+struct or_<> {
     template <class... Args>
     bool operator()(Args&&...) const {
         return true;
     }
 };
-
-template<typename T>
-concept IsGuard = std::is_base_of_v<base_guard, T>;
 
 }

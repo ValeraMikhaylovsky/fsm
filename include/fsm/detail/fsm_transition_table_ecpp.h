@@ -11,29 +11,30 @@ namespace ecpp::fsm {
 
 struct transition_table_base {};
 
-
 template<IsTransition ...T>
 struct transition_table : transition_table_base
 {
-    static_assert(no_dublicates<T...>::value, "transition table contains duplicates");
+    // в таблице переходов должно быть хотя бы один переход
+    static_assert(sizeof...(T) > 0, "transition_table must be not empty!");
+    static_assert(no_dublicates<typename T::tag_t...>::value, "transition table contains duplicates");
 
+    // определяем промежуточное состояние FSM, в котором оно будет находиться во время перехода между состояниями
     struct empty_state : state<empty_state> {};
-
+    // извлекаем список уникальных состояний из всех переходов и добавляем пустое состояние
+    using states_t = unique_variant<typename T::source_t..., typename T::target_t..., empty_state>;
+    // извлекаем типы всех событий
+    using all_states_t = type_pack<typename T::source_t..., typename T::target_t...>;
+    // извлекаем список всех событий из всех переходов
+    using events_t = type_pack<typename T::event_t...>;
+    // количество переходов
     static constexpr std::size_t count = sizeof...(T);
-    using transition_pack = type_pack<T...>;
-    using events_pack = type_pack<typename T::event_t...>;
-    using states_pack = unique_type_pack<typename T::source_t..., typename T::target_t...>;
+    // извлекаем все таблицы переходов определённые внутри состояний
     using internal_transitions = non_void_type_pack<typename T::source_tr_t..., typename T::target_tr_t...>;
-    using states_variant = unique_variant<typename T::source_t..., typename T::target_t..., empty_state>;
 
-    static inline constexpr std::variant<T...> make_transition(std::size_t index) {
-        return make_impl(std::index_sequence_for<T...>(), index);
-    }
-
-    static inline constexpr std::size_t get_index(const auto &s, const auto &e) {
-        using state_t = std::decay_t<decltype(s)>;
-        using event_t = std::decay_t<decltype(e)>;
-        constexpr bool bs[] = {(std::is_same_v<state_t, typename T::source_t> && std::is_same_v<event_t, typename T::event_t>)...};
+    // возвращает номер перехода, которому соответствует входной тип состояния и события
+    static inline constexpr std::size_t index_of(const auto &s, const auto &e) noexcept {
+        using tag_t = type_pack<std::decay_t<decltype(s)>, std::decay_t<decltype(e)>>;
+        constexpr bool bs[] = {std::is_same_v<tag_t, typename T::tag_t>...};
         for (std::size_t index {0}; index < sizeof...(T); ++index) {
             if (bs[index])
                 return index;
@@ -41,7 +42,7 @@ struct transition_table : transition_table_base
         return sizeof...(T);
     }
 
-    static inline constexpr std::size_t get_index(const auto &e) {
+    static inline constexpr std::size_t index_of(const auto &e) {
         using event_t = std::decay_t<decltype(e)>;
         constexpr bool bs[] = {(std::is_same_v<event_t, typename T::event_t>)...};
         for (std::size_t index {0}; index < sizeof...(T); ++index) {
@@ -51,21 +52,24 @@ struct transition_table : transition_table_base
         return sizeof...(T);
     }
 
-    template <std::size_t... I>
-    static std::variant<T...> make_impl(std::index_sequence<I...>, std::size_t i) {
-        return std::array { +[] { return std::variant<T...>(std::in_place_index<I>); }... }[i]();
+    static inline constexpr std::variant<T...> make_transition(std::size_t index) {
+        return make_current_variant<T...>(std::index_sequence_for<T...>(), index);
     }
+
+    template <class U>
+    static constexpr bool contains_in_table(type_pack<>&&) {
+        return false;
+    }
+
+    template <class E, class... Es>
+    static constexpr bool contains_in_table(type_pack<Es...> &&) {
+        return (... || contains<E>(typename Es::events_t{}));
+    }
+
+    template<class E>
+    struct has_event {
+        static constexpr bool value = contains<E>(events_t{}) || contains_in_table<E>(internal_transitions{});
+    };
 };
-
-template <class T>
-constexpr bool contains_in_table(type_pack<>&&) {
-    return false;
-}
-
-template <class T, class... Ts>
-constexpr bool contains_in_table(type_pack<Ts...> &&) {
-    return (... || contains<T>(typename Ts::events_pack{}));
-}
-
 
 }

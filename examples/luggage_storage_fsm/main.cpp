@@ -14,13 +14,13 @@ struct luggage_storage_def {
     //@{
     /** @name States */
     struct locked : state<locked> {
-        struct print_status : action<print_status> {
-            void operator()(status &&, auto &) const {
+        struct print_status {
+            void operator()(const status &, auto &) const {
                 std::cout << "status: locked" << std::endl;
             }
         };
 
-        struct is_print : guard<print_status> {
+        struct is_print {
             bool operator()(const status &event, const auto &fsm) const {
                return true;
             }
@@ -33,8 +33,8 @@ struct luggage_storage_def {
     };
 
     struct unlocked : state<unlocked> {
-        struct print_status : action<print_status> {
-            void operator()(status &&, auto &) const {
+        struct print_status {
+            void operator()(const status &, auto &) const {
                 std::cout << "status: unlocked" << std::endl;
             }
         };
@@ -46,27 +46,27 @@ struct luggage_storage_def {
     };
     //@}
 
-    struct on_locked : action<on_locked> {
-        void operator()(lock &&event, auto &fsm) const {
+    struct on_locked {
+        void operator()(const lock &event, auto &fsm) const {
             fsm.m_pincode = event.pincode; // save pincode
             std::cout << "locked!" << std::endl;
         }
     };
 
-    struct on_unlocked : action<on_unlocked> {
-        void operator()(unlock &&event, auto &fsm) const {
+    struct on_unlocked {
+        void operator()(const unlock &event, auto &fsm) const {
             fsm.m_pincode = 0; // reset pincode
             std::cout << "unlocked!" << std::endl;
         }
     };
 
-    struct is_set_pincode : guard<is_set_pincode> {
+    struct is_set_pincode {
         bool operator()(const lock &event, const auto &fsm) const {
             return event.pincode != 0;
         }
     };
 
-    struct is_valid_pincode : guard<is_valid_pincode> {
+    struct is_valid_pincode {
         bool operator()(const unlock &event, const auto & fsm) const {
             return event.pincode == fsm.m_pincode; // check input pincode
         }

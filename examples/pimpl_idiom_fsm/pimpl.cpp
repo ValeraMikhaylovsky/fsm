@@ -21,14 +21,14 @@ struct minimal_def {
 
     //@{
     /** @name Actions */
-    struct on_start : action<on_start> {
-        void operator()(events::start &&/*event*/, auto &/*fsm*/) const {
+    struct on_start {
+        void operator()(const events::start &/*event*/, auto &/*fsm*/) const {
             std::cout << "started" << std::endl;
         }
     };
 
-    struct on_stop : action<on_start> {
-        void operator()(events::stop &&/*event*/, auto &/*fsm*/) const {
+    struct on_stop {
+        void operator()(const events::stop &/*event*/, auto &/*fsm*/) const {
             std::cout << "stoped" << std::endl;
         }
     };

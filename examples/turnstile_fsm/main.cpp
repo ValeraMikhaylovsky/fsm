@@ -14,9 +14,9 @@ struct turnstile_def {
     /** @name States */
     struct locked   : state<locked> {
 
-        struct beep : action<beep> {
+        struct beep {
             // partial specialization by event
-            void operator()(push &&, auto &/*fsm*/) const {
+            void operator()(const push &, auto &/*fsm*/) const {
                 std::cout << "beep!" << std::endl;
             }
         };
@@ -32,8 +32,8 @@ struct turnstile_def {
     };
     //@}
 
-    struct on_blink : action<on_blink> {
-        void operator()(coin &&, auto&) const {
+    struct on_blink {
+        void operator()(const coin &, auto&) const {
             std::cout << "blink, blink, blink!" << std::endl;
         }
     };
