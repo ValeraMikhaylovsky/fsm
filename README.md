@@ -61,9 +61,9 @@ void use()
 {
     minimal fsm;
     assert(fsm.is_in_state<minimal_def::initial>());
-    assert(fsm.process_event(start{}) == event_result::done);
+    assert(fsm.process_event(start{}) == result::done);
     assert(fsm.is_in_state<minimal_def::running>());
-    assert(fsm.process_event(stop{})  == event_result::done);
+    assert(fsm.process_event(stop{})  == result::done);
     assert(fsm.is_in_state<minimal_def::terminated>());
 }
 ```
