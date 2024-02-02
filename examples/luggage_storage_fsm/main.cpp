@@ -91,17 +91,17 @@ int main(int argc, char *argv[])
     luggage_storage fsm;
 
     assert(fsm.is_in_state<luggage_storage_def::unlocked>());
-    assert(fsm.process_event(status{}) == event_result::done);          // print: "status: unlocked"
-    assert(fsm.process_event(lock{0}) == event_result::refuse);         // incorrect pincode - ignore
+    assert(fsm.process_event(status{}) == result::done);          // print: "status: unlocked"
+    assert(fsm.process_event(lock{0}) == result::refuse);         // incorrect pincode - ignore
     assert(fsm.is_in_state<luggage_storage_def::unlocked>());
-    assert(fsm.process_event(lock{0x3254}) == event_result::done);      // correct pincode - switch to lock
+    assert(fsm.process_event(lock{0x3254}) == result::done);      // correct pincode - switch to lock
     assert(fsm.is_in_state<luggage_storage_def::locked>());
-    assert(fsm.process_event(status{}) == event_result::done);          // print: "status: locked"
-    assert(fsm.process_event(unlock{0x7258}) == event_result::refuse);  // incorrect pincode - ignore
+    assert(fsm.process_event(status{}) == result::done);          // print: "status: locked"
+    assert(fsm.process_event(unlock{0x7258}) == result::refuse);  // incorrect pincode - ignore
     assert(fsm.is_in_state<luggage_storage_def::locked>());
-    assert(fsm.process_event(unlock{0x3254}) == event_result::done);    // correct pincode - switch to unlock
+    assert(fsm.process_event(unlock{0x3254}) == result::done);    // correct pincode - switch to unlock
     assert(fsm.is_in_state<luggage_storage_def::unlocked>());
-    assert(fsm.process_event(status{}) == event_result::done);          // print: "status: unlocked"
+    assert(fsm.process_event(status{}) == result::done);          // print: "status: unlocked"
 
     return 0;
 }

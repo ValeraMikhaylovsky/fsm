@@ -18,17 +18,17 @@ concept CallActionShort = requires(A action, E event, F fsm) {
 template <class A>
 struct call_action {
     template<class E, class F, class S, class D> requires CallActionLong<A, E, F, S, D>
-    void operator()(const E &event, F &fsm, S &src, D &dst) {
+    void operator()(const E &event, F &fsm, S &src, D &dst) noexcept {
         A{}(event, fsm, src, dst);
     }
 
     template<class E, class F, class S, class D> requires CallActionShort<A, E, F>
-    void operator()(const E &event, F &fsm, S&, D&) {
+    void operator()(const E &event, F &fsm, S&, D&) noexcept {
         A{}(event, fsm);
     }
 
     template<class E, class F, class S, class D>
-    void operator()(const E&, F&, S&, D&) {}
+    void operator()(const E&, F&, S&, D&) noexcept {}
 };
 
 }

@@ -22,7 +22,7 @@ struct tr : transition_base
     using target_tr_t = typename target_t::internal_transitions;
 
     // тип идентификатор уникальности
-    using tag_t = type_pack<source_t, event_t>;
+    using tag_t = meta::type_pack<source_t, event_t>;
 
     // исходное и конечное состояния не могут быть одним и тем же
     static_assert(!std::is_same_v<Source, Target>, "source state and target state is same!");
@@ -39,7 +39,7 @@ struct in : transition_base {
     using target_tr_t = void;
 
     // тип идентификатор уникальности
-    using tag_t = type_pack<event_t, action_t>;
+    using tag_t = meta::type_pack<event_t, action_t>;
 };
 
 template<typename T>

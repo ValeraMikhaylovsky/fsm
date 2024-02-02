@@ -55,10 +55,10 @@ int main(int argc, char *argv[])
     turnstile fsm;
 
     assert(fsm.is_in_state<turnstile_def::locked>());
-    assert(fsm.process_event(push{}) == event_result::done); // beep!
-    assert(fsm.process_event(coin{}) == event_result::done); // blink, blink, blink!
+    assert(fsm.process_event(push{}) == result::done); // beep!
+    assert(fsm.process_event(coin{}) == result::done); // blink, blink, blink!
     assert(fsm.is_in_state<turnstile_def::unlocked>());
-    assert(fsm.process_event(push{})  == event_result::done);
+    assert(fsm.process_event(push{})  == result::done);
     assert(fsm.is_in_state<turnstile_def::locked>());
 
     return 0;
